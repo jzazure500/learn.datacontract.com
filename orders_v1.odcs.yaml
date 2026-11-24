@@ -23,7 +23,7 @@ schema:
         mustBeGreaterThan: 0
     properties:
       - name: "order_id"
-        logicalType: "string"
+        logicalType: "text"
         description: ""
         physicalType: "TEXT"
       - name: "order_timestamp"

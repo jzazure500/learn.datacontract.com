@@ -1,0 +1,42 @@
+apiVersion: v1.1.0
+kind: DataProduct
+id: orders
+name: Orders
+version: 1.0.0
+status: active
+type: sourceAligned
+domain: ecommerce
+description:
+  purpose: Source-aligned data product exposing orders and line items from the e-commerce platform.
+  limitations: Contains PII (customer email addresses). Access requires approval by the Order Data Team.
+tags: ['orders', 'ecommerce']
+context:
+  instructions: >-
+    Always use the orders_v2 output port. orders_v1 is deprecated and retired;
+    only use it if explicitly asked for historical v1 data.
+    order_total is in cents and timestamps are in UTC.
+outputPorts:
+- name: orders_v1
+  description: Orders and line items tables in PostgreSQL (v1, superseded by v2)
+  deprecated: true
+  version: 1.0.0
+  contractId: orders_v1
+  context:
+    instructions: Deprecated. Do not use for new queries; use the orders_v2 port instead.
+- name: orders_v2
+  description: Orders and line items tables in PostgreSQL, including quantity (v2)
+  version: 2.0.0
+  contractId: orders_v2
+  context:
+    instructions: >-
+      Current version. Use this port for all order and line item queries.
+      line_items.quantity is the number of units per line item.
+team:
+  name: order_data_team
+  members:
+  - username: owner@example.com
+    role: Owner
+support:
+- channel: "#order-data-help"
+  url: https://example.slack.com/archives/order-data-help
+  tool: slack

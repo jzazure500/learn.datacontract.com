@@ -1,0 +1,162 @@
+apiVersion: "v3.2.0"
+kind: "DataContract"
+id: "orders_v2"
+name: "Orders"
+version: "2.0.0"
+status: "active"
+servers:
+  - server: "Orders"
+    type: "postgres"
+    port: 5433
+    host: "localhost"
+    database: "workshop"
+    schema: "orders_v2"
+schema:
+  - name: "orders"
+    businessName: "Schema 1"
+    logicalType: "object"
+    physicalType: "table"
+    quality:
+      - type: "sql"
+        description: "Ensures the orders table must not be empty"
+        query: "SELECT COUNT(*) FROM orders_v2.orders;"
+        mustBeGreaterThan: 0
+    properties:
+      - name: "order_id"
+        logicalType: "string"
+        description: ""
+        physicalType: "TEXT"
+      - name: "order_timestamp"
+        logicalType: "date"
+        description: ""
+        physicalType: "TIMESTAMPTZ"
+      - name: "order_total"
+        logicalType: "integer"
+        description: ""
+        physicalType: "BIGINT"
+        quality:
+          - type: "sql"
+            description: "Ensures order_total must never be negative"
+            query: "SELECT COUNT(*) FROM orders_v2.orders WHERE order_total < 0;"
+            mustBe: 0
+      - name: customer_id
+        deprecated: true
+        physicalType: "TEXT"
+        logicalType: string
+      - name: "customer_email_address"
+        logicalType: "string"
+        description: ""
+        physicalType: "TEXT"
+        classification: "confidential"
+        required: true
+        quality:
+          - type: "sql"
+            description: "Ensure email addresses are valid"
+            query: "SELECT COUNT(*) FROM orders_v2.orders WHERE customer_email_address NOT LIKE '%@%';"
+            mustBe: 0
+    context:
+      instructions: "One row per order. Join line_items on order_id to get the purchased SKUs."
+    customProperties:
+      - property: ""
+        value: ""
+        description: ""
+    authoritativeDefinitions:
+      - type: ""
+        url: ""
+        description: ""
+    synonyms:
+      - synonym: "purchases"
+      - synonym: "Bestellungen"
+  - name: "line_items"
+    businessName: "Schema 2"
+    logicalType: "object"
+    physicalType: "table"
+    properties:
+      - name: "lines_item_id"
+        logicalType: "string"
+        description: ""
+        physicalType: "TEXT"
+        quality:
+          - type: "sql"
+            description: "Ensures Every order_id in line_items must exist in orders"
+            query: "SELECT COUNT(*) FROM orders_v2.line_items li LEFT JOIN orders_v2.orders o ON li.order_id = o.order_id WHERE o.order_id IS NULL;"
+            mustBe: 0
+      - name: "order_id"
+        logicalType: "string"
+        description: ""
+        physicalType: "TEXT"
+        relationships:
+          - type: "foreignKey"
+            to: "orders.order_id"
+      - name: "sku"
+        logicalType: "string"
+        description: ""
+        physicalType: "TEXT"
+        synonyms:
+          - synonym: "article number"
+          - synonym: "Artikelnummer"
+      - name: "quantity"
+        logicalType: "integer"
+        description: ""
+        physicalType: "BIGINT"
+        quality:
+          - type: "sql"
+            description: "Ensure quantity is positive"
+            query: "SELECT COUNT(*) FROM orders_v2.line_items WHERE quantity <= 0;"
+            mustBe: 0
+    synonyms:
+      - synonym: "order lines"
+description:
+  purpose: |
+    Provide reliable order data for analytics and reporting, such as order volume, revenue trends, basket analysis and customer purchasing behaviour.
+  limitations: |
+    Contains personally identifiable information (customer_email_address, customer_id), which is classified as confidential. Do not use it for marketing or share it outside approved use cases, and aggregate or pseudonymise it before publishing results. order_total is in cents, not currency units. The data is a static snapshot and may not include the most recent orders. Returns, refunds and cancellations are not reflected.
+  usage: |
+    Orders placed on the company's e-commerce platform, together with their line items. The orders table holds one row per order with its timestamp, order total and customer details. The line_items table holds the individual products (SKUs) in each order and joins to orders on order_id. order_total is in cents and all timestamps are in UTC.
+tags:
+  - "orders"
+  - "ecommerce"
+context:
+  instructions: |-
+    Orders of the e-commerce platform and their line items.
+        order_total is in cents. Timestamps are in UTC.
+        Use this data for order volume and revenue analysis.
+  verifiedStatements:
+    - question: "How many orders were placed in 2023?"
+      answer: "SELECT COUNT(*) FROM orders_v2.orders WHERE EXTRACT(YEAR FROM order_timestamp) = 2023;"
+    - question: "What was the revenue per year?"
+      answer: "SELECT EXTRACT(YEAR FROM order_timestamp)::int AS year, SUM(order_total) / 100.0 AS revenue FROM orders_v2.orders GROUP BY 1 ORDER BY 1;"
+  constraints:
+    - constraint: "Never output customer_email_address or customer_id. Aggregate the data instead."
+      tags:
+        - "pii"
+team:
+  name: "order_data_team"
+  customProperties:
+    - property: ""
+      value: ""
+  authoritativeDefinitions:
+    - type: ""
+      url: ""
+      description: ""
+  members:
+    - username: "owner@example.com"
+      name: ""
+      role: "Owner"
+support:
+  - channel: "\"#order-data-help\""
+    url: "https://example.slack.com/archives/order-data-help"
+    tool: "slack"
+slaProperties:
+  - property: "retention"
+    value: 10
+    unit: "y"
+    element: "orders.order_timestamp"
+    description: "Orders are deleted after 10 years"
+    customProperties:
+      - property: "frequency"
+        value: 1
+    authoritativeDefinitions:
+      - type: ""
+        url: ""
+        description: "Data updated daily"

@@ -1,0 +1,35 @@
+name: Data Contracts
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  COLUMNS: 200 # wider tables in the logs
+
+jobs:
+  test:
+    name: Lint and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10.2.0
+
+      - name: Install the CLIs
+        run: |
+          uv tool install --python 3.11 'datacontract-cli[postgres]==1.2.3'
+          uv tool install --python 3.11 'dataproduct-cli==0.3.1'
+
+      - name: Lint data contracts
+        run: |
+          for file in *.odcs.yaml; do
+            datacontract lint "$file"
+          done
+
+      - name: Lint data products
+        run: |
+          for file in *.odps.yaml; do
+            dataproduct lint "$file"
+          done

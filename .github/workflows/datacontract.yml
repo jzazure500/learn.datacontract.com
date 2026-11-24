@@ -33,3 +33,14 @@ jobs:
           for file in *.odps.yaml; do
             dataproduct lint "$file"
           done
+      
+      - name: Start the database
+        run: docker compose up -d --wait
+
+      - name: Create the views
+        run: |
+          docker compose exec -T postgres psql -U workshop -d workshop -v ON_ERROR_STOP=1 < sql/sku_sales_input.sql
+          docker compose exec -T postgres psql -U workshop -d workshop -v ON_ERROR_STOP=1 < sql/sku_sales_per_year.sql
+
+      - name: Test data contracts
+        run: datacontract ci *.odcs.yaml

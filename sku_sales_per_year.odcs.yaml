@@ -63,7 +63,7 @@ schema:
   - name: total_quantity
     semanticType: measure
     transformLogic: SUM(line_items.quantity)
-    physicalType: integer
+    physicalType: bigint
     logicalType: integer
     quality:
     - type: text

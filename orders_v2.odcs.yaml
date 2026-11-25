@@ -40,6 +40,7 @@ schema:
             query: "SELECT COUNT(*) FROM orders_v2.orders WHERE order_total < 0;"
             mustBe: 0
       - name: customer_id
+        description: "Deprecated. Use customer_email_address to identify the customer."
         deprecated: true
         physicalType: "TEXT"
         logicalType: string

@@ -39,10 +39,6 @@ schema:
             description: "Ensures order_total must never be negative"
             query: "SELECT COUNT(*) FROM orders_v2.orders WHERE order_total < 0;"
             mustBe: 0
-      - name: customer_id
-        deprecated: true
-        physicalType: "TEXT"
-        logicalType: string
       - name: "customer_email_address"
         logicalType: "string"
         description: ""
